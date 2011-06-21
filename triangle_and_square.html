@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd"
+    >
+<html lang="en">
+<head>
+    <title>Triangle and square | examples | PhiloGL</title>
+	<script type="text/javascript" src="/assets/js/PhiloGL.cls.js"></script>
+	<script type="text/javascript">
+		if(PhiloGL.hasWebGL()) {
+			PhiloGL.unpack();
+		//Create application
+			
+			function webGLStart() {
+				PhiloGL('lesson01-canvas', {
+				  program: {
+					from: 'ids',
+					vs: 'shader-vs',
+					fs: 'shader-fs'
+				  },
+				  onError: function() {
+					alert("An error ocurred while loading the application");
+				  },
+				  onLoad: function(app) {
+					var gl = app.gl, // direct access to the webGL API
+						canvas = app.canvas,
+						program = app.program,
+						camera = app.camera;
+					
+					gl.viewport(0, 0, canvas.width, canvas.height);
+					
+					// set background colour to black
+					gl.clearColor(0, 0, 0, 1);
+					
+					gl.clearDepth(1);
+					
+					// do depth testing to occlude things based on depth
+					gl.enable(gl.DEPTH_TEST);
+					gl.depthFunc(gl.LEQUAL);
+					
+					// allocate some memory on the graphics card to hold the shapes
+					// all rendering of these shapes will just then be based on transformations of this data
+					program.setBuffers({
+					  'triangle': {
+						attribute: 'aVertexPosition',
+						value: new Float32Array(
+							[
+							  0,  1,  0,
+							 -1, -1,  0,
+							  1, -1,  0
+							 ]
+						),
+						size: 3
+					  },
+					  
+					  'square': {
+						attribute: 'aVertexPosition',
+						value: new Float32Array(
+							[
+							  1,  1,  0,
+							 -1,  1,  0,
+							  1, -1,  0,
+							 -1, -1,  0
+							 ]
+						),
+						size: 3
+					  }
+					});
+					
+					gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+					camera.modelView.id();
+					//Draw Triangle
+					camera.modelView.$translate(-1.5, 0, -7); // position the initial draw point (away from the viewer, who is at 0, 0, 0)
+					program.setUniform('uMVMatrix', camera.modelView); // set the vertex shader's uMVMatrix variable to the modelView matrix
+					program.setUniform('uPMatrix', camera.projection); // set the vertex shader's uPMatrix variable to the projection matrix
+					program.setBuffer('triangle'); // load the buffer with the triangle's vertices					
+					gl.drawArrays(gl.TRIANGLES, 0, 3); // draw what's in the buffer, starting with item (vertex) 0 and ending with 3
+					
+					//Draw Square
+					camera.modelView.$translate(3, 0, 0);
+					program.setUniform('uMVMatrix', camera.modelView);
+					program.setUniform('uPMatrix', camera.projection);
+					program.setBuffer('square'); // load the buffer with the square's vertices
+					gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); // draw what's in the buffer, starting with item (vertex) 0 and ending with 4
+				  }
+				});
+			}
+			
+		} else {
+			alert('no WebGL support!');	
+		}
+	</script>
+	<script id="shader-fs" type="x-shader/x-fragment">
+		#ifdef GL_ES
+		precision highp float;
+		#endif
+		void main(void) {
+			gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+		}
+	</script>
+	<script id="shader-vs" type="x-shader/x-vertex">
+		attribute vec3 aVertexPosition;
+		uniform mat4 uMVMatrix;
+		uniform mat4 uPMatrix;
+		void main(void) {
+			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		}
+	</script>
+</head>
+<body>
+    <canvas height="500" width="500" style="border: none;" id="lesson01-canvas"></canvas>
+	<script type="text/javascript">
+		webGLStart();
+	</script>
+</body>
+</html>
